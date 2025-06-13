@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Jarvis Web Assistant</title>
+</head>
+<body>
+  <h1>JARVIS - Your Voice Assistant</h1>
+  <button onclick="startListening()">Talk to JARVIS</button>
+  <p id="output">Say something like: "Open YouTube", "Search Wikipedia for AI", or "What time is it?"</p>
+
+  <script>
+    const output = document.getElementById("output");
+    const synth = window.speechSynthesis;
+
+    function speak(text) {
+      const utter = new SpeechSynthesisUtterance(text);
+      synth.speak(utter);
+    }
+
+    function startListening() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'en-US';
+      recognition.start();
+
+      recognition.onresult = function(event) {
+        const query = event.results[0][0].transcript.toLowerCase();
+        output.innerText = `You said: "${query}"`;
+        processCommand(query);
+      };
+
+      recognition.onerror = function(event) {
+        output.innerText = "Sorry, I couldn't understand.";
+      };
+    }
+
+    function processCommand(query) {
+      if (query.includes("wikipedia")) {
+        const topic = query.replace("search wikipedia for", "").trim();
+        speak("Searching Wikipedia for " + topic);
+        fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${topic}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.extract) {
+              speak(data.extract);
+            } else {
+              speak("Sorry, I could not find anything on Wikipedia.");
+            }
+          });
+      } else if (query.includes("open youtube")) {
+        speak("Opening YouTube");
+        window.open("https://youtube.com", "_blank");
+      } else if (query.includes("open google")) {
+        speak("Opening Google");
+        window.open("https://google.com", "_blank");
+      } else if (query.includes("time")) {
+        const now = new Date();
+        const time = now.toLocaleTimeString();
+        speak("The time is " + time);
+      } else {
+        speak("Sorry, I did not understand that command.");
+      }
+    }
+  </script>
+</body>
+</html>
